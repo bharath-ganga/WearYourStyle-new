@@ -1,0 +1,42 @@
+import { useState, useEffect } from "react";
+import { Section } from "../../styles/styles";
+import Title from "../common/Title";
+import ProductList from "./ProductList";
+
+const ProductSimilar = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/products");
+        const data = await response.json();
+        // Shuffle and limit to 4
+        const shuffled = data.sort(() => 0.5 - Math.random());
+        setProducts(shuffled.slice(0, 4));
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  return (
+    <Section>
+      <Title titleText={"Similar Products"} />
+      {loading ? (
+        <div className="flex justify-center items-center py-10">
+          <i className="bi bi-arrow-clockwise fa-spin text-3xl" style={{ animation: "spin 1s linear infinite" }}></i>
+          <span className="ml-2">Loading...</span>
+        </div>
+      ) : (
+        <ProductList products={products} />
+      )}
+    </Section>
+  );
+};
+
+export default ProductSimilar;
