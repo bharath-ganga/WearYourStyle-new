@@ -217,6 +217,8 @@ const AdminDashboard = () => {
                             <tr>
                                 <th>Order ID</th>
                                 <th>Customer Email</th>
+                                <th>Transaction ID</th>
+                                <th>Payment Type</th>
                                 <th>Date</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -225,8 +227,16 @@ const AdminDashboard = () => {
                         <tbody>
                             {orders.map(order => (
                                 <tr key={order.id}>
-                                    <td>{order.order_no || order.id.substring(0, 8)}</td>
-                                    <td>{order.userEmail || "Guest"}</td>
+                                    <td>
+                                        <div style={{fontWeight: 'bold'}}>{order.order_no || order.id.substring(0, 8)}</div>
+                                        <div style={{fontSize: '11px', color: '#888'}}>{order.id}</div>
+                                    </td>
+                                    <td>
+                                        <div>{order.userEmail || "Guest"}</div>
+                                        <div style={{fontSize: '12px', color: '#666'}}>{order.paymentDetails?.customerName}</div>
+                                    </td>
+                                    <td><code style={{background: '#f0f0f0', padding: '2px 5px', borderRadius: '4px'}}>{order.paymentDetails?.transactionId || "N/A"}</code></td>
+                                    <td>{order.paymentDetails?.paymentType || order.paymentMethod}</td>
                                     <td>{order.order_date}</td>
                                     <td><Badge status={order.status}>{order.status}</Badge></td>
                                     <td>

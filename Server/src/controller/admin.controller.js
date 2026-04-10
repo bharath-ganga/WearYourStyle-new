@@ -2,10 +2,22 @@ import asyncHandler from "../utils/AsyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import { Order } from "../models/order.model.js";
 import { Product } from "../models/product.model.js";
+import { Payment } from "../models/payment.model.js";
 
 const getAllOrders = asyncHandler(async (req, res) => {
   const orders = await Order.getAll();
-  res.status(200).json({ success: true, data: orders });
+  const payments = await Payment.getAll();
+  
+  // Attach payment info to each order
+  const ordersWithPayments = orders.map(order => {
+      const payment = payments.find(p => p.orderId === order.id);
+      return {
+          ...order,
+          paymentDetails: payment || null
+      };
+  });
+
+  res.status(200).json({ success: true, data: ordersWithPayments });
 });
 
 const updateOrderStatus = asyncHandler(async (req, res) => {

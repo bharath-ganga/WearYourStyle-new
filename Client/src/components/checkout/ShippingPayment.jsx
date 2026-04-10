@@ -185,24 +185,32 @@ const ShippingPayment = () => {
             const discountAmount = discountPercent > 0 ? (totalAmount * discountPercent) / 100 : 0;
             const finalAmount = totalAmount - discountAmount + 50;
 
+            // Generate a simulated transaction ID
+            const transactionId = `TRX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+            
             const orderData = {
                 items: carts,
-                totalAmount: finalAmount, // Including shipping and discount
+                totalAmount: finalAmount, 
                 shippingAddress: "Default Address", 
                 paymentMethod: paymentMethod,
-                status: "Order Placed", // initial tracking status
+                status: "Order Placed", 
                 delivery_date: getDeliveryDate(),
-                userId: localStorage.getItem("userId") || "guest"
+                userId: localStorage.getItem("userId") || "guest",
+                payment_details: {
+                    transaction_id: transactionId,
+                    payment_type: paymentMethod,
+                    customer_name: localStorage.getItem("userName") || "Guest User",
+                    timestamp: new Date().toISOString()
+                }
             };
 
             await axios.post(`${API_BASE_URL}/api/orders/place`, orderData);
             
-            // Add Gamification/Loyalty Points!
             const pts = Number(localStorage.getItem("loyaltyPoints") || 450);
             localStorage.setItem("loyaltyPoints", pts + 50);
 
             dispatch(clearCart());
-            toast.success("Order placed successfully!");
+            toast.success(`Order placed! Transaction ID: ${transactionId}`);
             navigate("/confirm");
         } catch (error) {
             console.error("Error placing order:", error);

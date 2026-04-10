@@ -1,8 +1,11 @@
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import { currencyFormat } from "../../utils/helper";
-import { BaseLinkGreen } from "../../styles/button";
+import { BaseLinkGreen, BaseButtonBlack } from "../../styles/button"; // Added BaseButtonBlack
 import { breakpoints, defaultTheme } from "../../styles/themes/default";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/apiConfig";
+import { toast } from "react-hot-toast";
 
 const OrderItemWrapper = styled.div`
   margin: 30px 0;
@@ -26,6 +29,7 @@ const OrderItemWrapper = styled.div`
     }
   }
 
+  /* ... existing styles ... */
   .order-info-group {
     @media (max-width: ${breakpoints.sm}) {
       flex-direction: column;
@@ -88,9 +92,48 @@ const OrderItemWrapper = styled.div`
       }
     }
   }
+
+  .order-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      @media (max-width: ${breakpoints.sm}) {
+          flex-direction: column;
+          align-items: flex-start;
+          width: 100%;
+          
+          & > * {
+              width: 100%;
+              text-align: center;
+          }
+      }
+  }
 `;
 
 const OrderItem = ({ order }) => {
+  const handleCancel = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem("accessToken");
+        await axios.patch(`${API_BASE_URL}/api/orders/cancel/${order.id}`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        toast.success("Order cancelled successfully");
+        window.location.reload(); // Refresh to show updated status
+    } catch (error) {
+        console.error("Cancel failed:", error);
+        toast.error(error.response?.data?.message || "Failed to cancel order");
+    }
+  };
+
+  const showCancelButton = order.status === "Order Placed" || order.status === "pending";
+
   return (
     <OrderItemWrapper>
       <div className="order-item-details">
@@ -102,7 +145,7 @@ const OrderItem = ({ order }) => {
           </div>
           <div className="order-info-item">
             <span className="text-gray font-semibold">Order Status:</span>
-            <span className="text-silver">{order.status}</span>
+            <span style={{ color: order.status === 'Cancelled' ? '#ff4d4d' : 'inherit' }} className="text-silver font-bold">{order.status}</span>
           </div>
           <div className="order-info-item">
             <span className="text-gray font-semibold">
@@ -116,7 +159,7 @@ const OrderItem = ({ order }) => {
           </div>
         </div>
       </div>
-      <div className="order-overview flex justify-between">
+      <div className="order-overview flex justify-between items-center">
         <div className="order-overview-content grid">
           <div className="order-overview-img">
             <img
@@ -145,7 +188,15 @@ const OrderItem = ({ order }) => {
             </ul>
           </div>
         </div>
-        <BaseLinkGreen to={`/order_detail/${order.id}`}>View Detail</BaseLinkGreen>
+
+        <div className="order-actions">
+            {showCancelButton && (
+                <BaseButtonBlack onClick={handleCancel} style={{ background: "#ff4d4d", border: "none" }}>
+                    Cancel Order
+                </BaseButtonBlack>
+            )}
+            <BaseLinkGreen to={`/order_detail/${order.id}`}>View Detail</BaseLinkGreen>
+        </div>
       </div>
     </OrderItemWrapper>
   );
