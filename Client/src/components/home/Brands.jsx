@@ -15,11 +15,14 @@ const StyledSectionTitle = styled(TitleWrapper)`
 `;
 
 const BrandsContent = styled.div`
-  border-radius: 12px;
-  padding: 40px 0;
+  border-radius: 20px;
+  padding: 60px 20px;
+  background-color: ${(props) => props.theme.color_white};
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.05);
 
   @media (max-width: ${breakpoints.lg}) {
-    padding: 24px 0;
+    padding: 40px 20px;
   }
 `;
 
@@ -35,25 +38,55 @@ const BrandsListWrapper = styled.div`
 `;
 
 const BrandsItemWrapper = styled.div`
-  width: 178px;
-  height: 80px;
-  border-radius: 12px;
-  background-color: ${defaultTheme.color_white};
-  padding: 16px;
+  width: 180px;
+  height: auto;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  .brand-img-wrap {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+  }
 
   img {
-    width: auto;
+    max-width: 120px;
+    max-height: 50px;
+    object-fit: contain;
+    filter: grayscale(1);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+  }
+
+  &:hover img {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+
+  .brand-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: ${(props) => props.theme.color_dim_gray};
+      text-transform: uppercase;
+      letter-spacing: 1px;
   }
 
   @media (max-width: ${breakpoints.sm}) {
-    width: 120px;
-    border-radius: 8px;
+    width: 130px;
   }
 
   @media (max-width: ${breakpoints.xs}) {
-    width: 80px;
-    height: 50px;
-    border-radius: 4px;
+    width: 100px;
   }
 `;
 
@@ -61,21 +94,23 @@ const Brands = () => {
   return (
     <Section>
       <Container>
-        <BrandsContent className="bg-outerspace">
-          <StyledSectionTitle className="text-white text-center justify-center flex-col">
-            <h3>Top Brands Deal</h3>
-            <p className="text-xxl text-white">
-              Up to <span className="text-yellow">60%</span> off on brands.
+        <BrandsContent>
+          <StyledSectionTitle className="text-center justify-center flex-col">
+            <h2 className="text-4xl font-bold" style={{ marginBottom: '8px' }}>Top Brands Deal</h2>
+            <p className="text-lg font-medium text-gray">
+              Up to <span className="text-yellow" style={{ color: '#fdc419', fontWeight: 'bold' }}>60%</span> off on brands.
             </p>
           </StyledSectionTitle>
           <BrandsListWrapper className="flex items-center flex-wrap justify-center">
             {brandsData?.map((brand) => {
               return (
                 <BrandsItemWrapper
-                  className="flex items-center justify-center"
                   key={brand.id}
                 >
-                  <img src={brand.imgSource} alt="" />
+                  <div className="brand-img-wrap">
+                    <img src={brand.imgSource} alt={brand.name} />
+                  </div>
+                  <span className="brand-name">{brand.name}</span>
                 </BrandsItemWrapper>
               );
             })}

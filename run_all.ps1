@@ -10,8 +10,8 @@ foreach ($port in $ports) {
         if ($proc) {
             $pids = $proc.OwningProcess | Select-Object -Unique
             foreach ($pid in $pids) {
-                Write-Host "Terminating process on port $port (PID: $pid)..."
-                Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                Write-Host "Forcefully terminating process on port $port (PID: $pid)..."
+                taskkill /F /PID $pid /T
             }
         }
     } catch {
@@ -29,7 +29,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd Server; npm ru
 
 # 2. Start ML Server (Python)
 Write-Host "[2/3] Launching AI ML Server (Port 5000)..."
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd MlServer; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd MlServer; if (Test-Path '.\venv\Scripts\python.exe') { .\venv\Scripts\python.exe main.py } else { python main.py }"
 
 # 3. Start Client (Frontend)
 Write-Host "[3/3] Launching React Client (Port 5173)..."

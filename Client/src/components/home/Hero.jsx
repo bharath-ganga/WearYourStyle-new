@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -59,6 +59,22 @@ const HeroSliderItemWrapper = styled.div`
   }
 `;
 
+const fadeUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(40px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
+`;
+
+const textSlide = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
 const HeroSlideContent = styled.div`
   position: absolute;
   top: 0;
@@ -66,6 +82,7 @@ const HeroSlideContent = styled.div`
   transform: translateX(-50%);
   max-width: 1100px;
   z-index: 10;
+  animation: ${fadeUp} 1s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 
   .btn {
     height: 42px;
@@ -95,7 +112,7 @@ const HeroSlideContent = styled.div`
 
   .hero-text-top {
     font-size: 32px;
-
+    animation: ${textSlide} 1s ease-out 0.2s backwards;
     @media (max-width: ${breakpoints.lg}) {
       font-size: 26px;
     }
@@ -106,17 +123,18 @@ const HeroSlideContent = styled.div`
     letter-spacing: 0.315px;
     line-height: 1.2;
     margin-bottom: 20px;
+    animation: ${textSlide} 1s ease-out 0.4s backwards;
 
     @media (max-width: ${breakpoints.lg}) {
       font-size: 60px;
     }
-    @media (max-width: ${breakpoints.lg}) {
+    @media (max-width: ${breakpoints.md}) {
       font-size: 48px;
     }
-    @media (max-width: ${breakpoints.lg}) {
+    @media (max-width: ${breakpoints.sm}) {
       font-size: 36px;
     }
-    @media (max-width: ${breakpoints.lg}) {
+    @media (max-width: ${breakpoints.xs}) {
       font-size: 32px;
     }
   }
@@ -124,6 +142,7 @@ const HeroSlideContent = styled.div`
   .hero-text-bottom {
     font-size: 26px;
     margin-bottom: 24px;
+    animation: ${textSlide} 1s ease-out 0.6s backwards;
 
     @media (max-width: ${breakpoints.lg}) {
       font-size: 20px;
@@ -134,6 +153,7 @@ const HeroSlideContent = styled.div`
     font-size: 18px;
     height: 46px;
     min-width: 160px;
+    animation: ${textSlide} 1s ease-out 0.8s backwards;
   }
 `;
 

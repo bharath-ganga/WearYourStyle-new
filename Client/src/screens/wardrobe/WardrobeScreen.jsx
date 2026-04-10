@@ -109,6 +109,7 @@ const WardrobeScreen = () => {
     const [classification, setClassification] = useState(null);
     const [preview, setPreview] = useState(null);
     const [selectedItems, setSelectedItems] = useState({ top: null, bottom: null });
+    const [lookbooks, setLookbooks] = useState([]);
 
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -188,6 +189,19 @@ const WardrobeScreen = () => {
         }
     };
 
+    const handleSaveEnsemble = () => {
+        if (!selectedItems.top && !selectedItems.bottom) return;
+        setLookbooks(prev => [...prev, {
+            id: Date.now(),
+            name: `Lookbook #${prev.length + 1}`,
+            top: selectedItems.top,
+            bottom: selectedItems.bottom
+        }]);
+        toast?.success("Ensemble Saved to Lookbooks!");
+        // Reset
+        setSelectedItems({ top: null, bottom: null });
+    };
+
     return (
         <WardrobeWrapper>
             <Container>
@@ -251,7 +265,7 @@ const WardrobeScreen = () => {
                                 {selectedItems.bottom ? <img src={selectedItems.bottom.imgSource} style={{height: '100%'}} /> : "Select a Bottom"}
                             </div>
                         </div>
-                        <button className="btn btn-primary" style={{marginTop: '20px', width: '100%'}}>Save Ensemble</button>
+                        <button className="btn btn-primary" style={{marginTop: '20px', width: '100%', backgroundColor: '#6c5ce7', borderColor: '#6c5ce7'}} onClick={handleSaveEnsemble}>Save Ensemble</button>
                     </Card>
 
                     {/* 🔹 Smart Insights */}
@@ -291,6 +305,27 @@ const WardrobeScreen = () => {
                                 <img src={item.imgSource} style={{width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px'}} />
                                 <div style={{marginTop: '10px', textAlign: 'center'}}>
                                     <strong>{item.title}</strong>
+                                </div>
+                            </Card>
+                        ))
+                    )}
+                </Grid>
+
+                <SectionTitle style={{marginTop: '50px'}}>My Lookbooks (Moodboards)</SectionTitle>
+                <Grid>
+                    {lookbooks.length === 0 ? (
+                        <p>No Lookbooks saved. Use the Visual Builder to create one!</p>
+                    ) : (
+                        lookbooks.map(look => (
+                            <Card key={look.id} style={{padding: '15px'}}>
+                                <CardTitle style={{textAlign: 'center'}}>{look.name}</CardTitle>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '5px', height: '240px'}}>
+                                    <div style={{flex: 1, backgroundColor: '#f9f9f9', display: 'flex', justifyContent: 'center'}}>
+                                        {look.top ? <img src={look.top.imgSource} style={{height: '100%', objectFit: 'contain'}} /> : <span style={{alignSelf:'center'}}>No Top</span>}
+                                    </div>
+                                    <div style={{flex: 1, backgroundColor: '#f9f9f9', display: 'flex', justifyContent: 'center'}}>
+                                        {look.bottom ? <img src={look.bottom.imgSource} style={{height: '100%', objectFit: 'contain'}} /> : <span style={{alignSelf:'center'}}>No Bottom</span>}
+                                    </div>
                                 </div>
                             </Card>
                         ))

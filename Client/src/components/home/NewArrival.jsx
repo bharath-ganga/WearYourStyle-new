@@ -114,12 +114,16 @@ const NewArrival = ({ products = [] }) => {
   const [webcamActive, setWebcamActive] = useState(false); 
   const webcamRef = useRef(null);
   const [shirtImage, setShirtImage] = useState(null); 
+  const [detectedSize, setDetectedSize] = useState("");
   useEffect(() => {
     if (!socket) return;
 
     // Handle processed frame data from the server
     socket.on("frame_processed", (data) => {
         setSelectedImage(`data:image/png;base64,${data.frame}`);
+        if(data.detected_size) {
+            setDetectedSize(data.detected_size);
+        }
     });
 
     socket.on("error", (error) => {
@@ -143,6 +147,9 @@ const handleImageClick = async (imageUrl) => {
       const shirtBlob = await shirtResponse.blob();
       const shirtBase64 = await blobToBase64(shirtBlob);
       setShirtImage(shirtBase64); // Update the selected shirt image
+
+      // Notify server of the new garment to cache
+      socket.emit("update_garment", { shirt: shirtBase64 });
   } catch (error) {
       console.error("Error loading shirt image:", error);
   }
@@ -157,10 +164,9 @@ const sendFrameToServer = async () => {
   // Extract base64 part from data URL
   const frameBase64 = screenshot.split(",")[1];
 
-  // Send frame and shirt to the server
+  // Send only the frame to the server (shirt is cached)
   socket.emit("process_frame", {
       frame: frameBase64,
-      shirt: shirtImage,
   });
 };
 
@@ -177,6 +183,7 @@ const blobToBase64 = (blob) => {
 const toggleWebcam = () => {
   setWebcamActive((prev) => !prev);
   setSelectedImage(null); // Reset the image when toggling the webcam
+  setDetectedSize("");
 
   // Stop the webcam stream when disabling
   if (webcamRef.current && webcamRef.current.stream) {
@@ -261,11 +268,23 @@ useEffect(() => {
 
     {/* Display the virtual try-on image */}
     {selectedImage && (
-   
-      <div>
-        <img src={selectedImage} alt="Virtual Try-On" className="overlay-image" />
+      <div style={{position: 'relative'}}>
+        <img src={selectedImage} alt="Virtual Try-On" className="overlay-image" style={{display: 'block', margin: '0 auto'}} />
+        <div style={{marginTop: '20px', textAlign: 'center'}}>
+          {detectedSize && detectedSize !== "Unknown" && (
+            <p className="font-bold text-xl" style={{color: '#14c4b5', marginBottom: '10px'}}>
+              ✨ AI Smart Fit Estimate: Size {detectedSize} ✨
+            </p>
+          )}
+          <a href={selectedImage} download="MyWearYourStyleFit.png" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            backgroundColor: '#3c4242', color: 'white', padding: '10px 20px', 
+            borderRadius: '5px', textDecoration: 'none', fontWeight: 'bold'
+          }}>
+            <i className="bi bi-download"></i> Share My Fit
+          </a>
+        </div>
       </div>
-     
     )}
   </>
 )}

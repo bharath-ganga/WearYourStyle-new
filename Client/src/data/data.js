@@ -219,22 +219,27 @@ const brandsData = [
   {
     id: "brand-1",
     imgSource: staticImages.brand1,
+    name: "Nike",
   },
   {
     id: "brand-2",
     imgSource: staticImages.brand2,
+    name: "H&M",
   },
   {
     id: "brand-3",
     imgSource: staticImages.brand3,
+    name: "Levi's",
   },
   {
     id: "brand-4",
     imgSource: staticImages.brand4,
+    name: "U.S. Polo Assn.",
   },
   {
     id: "brand-5",
     imgSource: staticImages.brand5,
+    name: "Puma",
   },
 ];
 

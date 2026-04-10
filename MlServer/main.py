@@ -13,7 +13,10 @@ import requests
 app = Flask(__name__)
 # Enable CORS for all routes and origins
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=10**7)
+
+# Session-based garment cache
+garment_cache = {}
 
 # MediaPipe Initialization
 model_dir = os.path.dirname(__file__)
@@ -155,19 +158,41 @@ def overlay_png(background, overlay, position):
     background[y:y+ov_y2, x:x+ov_x2] = background_roi
     return background
 
+@socketio.on('update_garment')
+def update_garment(data):
+    try:
+        shirt_data = base64.b64decode(data['shirt'])
+        shirt = cv2.imdecode(np.frombuffer(shirt_data, np.uint8), cv2.IMREAD_UNCHANGED)
+        if shirt is not None:
+            garment_cache[request.sid] = shirt
+            emit('garment_updated', {'status': 'success'})
+        else:
+            emit('error', {'message': 'Invalid shirt data'})
+    except Exception as e:
+        emit('error', {'message': f'Garment update failed: {str(e)}'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    if request.sid in garment_cache:
+        del garment_cache[request.sid]
+
 @socketio.on('process_frame')
 def process_frame(data):
     try:
-        # Decode the frame and shirt image from base64
+        detected_size = "Unknown"
+        # Decode the frame from base64
         frame_data = base64.b64decode(data['frame'])
-        shirt_data = base64.b64decode(data['shirt'])
-
-        # Convert to numpy arrays
         frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
-        shirt = cv2.imdecode(np.frombuffer(shirt_data, np.uint8), cv2.IMREAD_UNCHANGED)
 
-        if frame is None or shirt is None:
-            emit('error', {'message': 'Invalid frame or shirt data'})
+        if frame is None:
+            emit('error', {'message': 'Invalid frame data'})
+            return
+
+        # Retrieve cached shirt for this session
+        shirt = garment_cache.get(request.sid)
+
+        if shirt is None:
+            emit('error', {'message': 'No shirt selected. Please select one.'})
             return
 
         # Convert frame to MediaPipe Image
@@ -193,6 +218,17 @@ def process_frame(data):
             shoulder_width = abs(left_shoulder_x - right_shoulder_x)
 
             if shoulder_width > 0:
+                # Estimate size based on normalized shoulder width relative to frame
+                normalized_shoulder = shoulder_width / w
+                if normalized_shoulder < 0.18:
+                    detected_size = "S (Small)"
+                elif 0.18 <= normalized_shoulder < 0.25:
+                    detected_size = "M (Medium)"
+                elif 0.25 <= normalized_shoulder < 0.35:
+                    detected_size = "L (Large)"
+                else:
+                    detected_size = "XL (Extra Large)"
+
                 # Resize shirt based on shoulder width
                 shirt_width = int(shoulder_width * 2.2) # Increased scale for better fit
                 shirt_height = int(shirt_width * shirt.shape[0] / shirt.shape[1])
@@ -205,13 +241,17 @@ def process_frame(data):
                 )
 
                 frame = overlay_png(frame, resized_shirt, shirt_position)
+            else:
+                emit('no_fit', {'message': 'Stand back for detection'})
+        else:
+            emit('no_fit', {'message': 'Person not found'})
 
         # Encode the processed frame back to base64
         _, buffer = cv2.imencode('.png', frame)
         processed_frame = base64.b64encode(buffer).decode('utf-8')
 
         # Send the processed frame back to the client
-        emit('frame_processed', {'frame': processed_frame})
+        emit('frame_processed', {'frame': processed_frame, 'detected_size': detected_size})
     except Exception as e:
         emit('error', {'message': str(e)})
 

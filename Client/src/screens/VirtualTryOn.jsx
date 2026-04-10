@@ -111,6 +111,9 @@ const VirtualTryOn = () => {
     const webcamRef = useRef(null);
     const [shirtImage, setShirtImage] = useState(null); // Stores selected shirt image
     const [activeShirt, setActiveShirt] = useState(null);
+    const [detectedSize, setDetectedSize] = useState("");
+    const [isAiProcessing, setIsAiProcessing] = useState(false);
+    const [aiFeedback, setAiFeedback] = useState("");
 
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -142,6 +145,14 @@ const VirtualTryOn = () => {
 
         socket.on("frame_processed", (data) => {
             setSelectedImage(`data:image/png;base64,${data.frame}`);
+            if (data.detected_size) setDetectedSize(data.detected_size);
+            setAiFeedback("");
+            setIsAiProcessing(false);
+        });
+
+        socket.on("no_fit", (data) => {
+            setAiFeedback(data.message);
+            setIsAiProcessing(false);
         });
 
         socket.on("error", (error) => {
@@ -179,13 +190,16 @@ const VirtualTryOn = () => {
             const shirtBlob = await shirtResponse.blob();
             const shirtBase64 = await blobToBase64(shirtBlob);
             setShirtImage(shirtBase64); 
+            
+            // Send the garment to the server once to cache it
+            socket.emit("update_garment", { shirt: shirtBase64 });
         } catch (error) {
             console.error("Error loading shirt image:", error);
         }
     };
 
     const sendFrameToServer = async () => {
-        if (!webcamRef.current || !shirtImage || !socket.connected) return;
+        if (!webcamRef.current || !socket.connected || !activeShirt) return;
 
         const screenshot = webcamRef.current.getScreenshot();
         if (!screenshot) return;
@@ -194,9 +208,9 @@ const VirtualTryOn = () => {
         const frameBase64 = screenshot.split(",")[1];
 
         socket.emit("process_frame", {
-            frame: frameBase64,
-            shirt: shirtImage,
+            frame: frameBase64
         });
+        setIsAiProcessing(true);
     };
 
     const blobToBase64 = (blob) => {
@@ -211,6 +225,9 @@ const VirtualTryOn = () => {
     const toggleWebcam = () => {
         setWebcamActive((prev) => !prev);
         setSelectedImage(null); 
+        setDetectedSize("");
+        setAiFeedback("");
+        setIsAiProcessing(false);
 
         if (webcamActive && webcamRef.current && webcamRef.current.stream) {
             const tracks = webcamRef.current.stream.getTracks();
@@ -285,21 +302,55 @@ const VirtualTryOn = () => {
                                 />
                                 
                                 {selectedImage && (
-                                    <div className="overlay">
+                                    <div className="overlay" style={{ zIndex: 5 }}>
                                         <img src={selectedImage} alt="Virtual Try-On" className="overlay-image" />
                                     </div>
                                 )}
+
+                                {/* AI STATUS OVERLAY */}
+                                <div style={{
+                                    position: 'absolute', top: '20px', right: '20px', 
+                                    backgroundColor: 'rgba(0,0,0,0.7)', padding: '10px 15px', 
+                                    borderRadius: '8px', zIndex: 10, color: 'white',
+                                    border: '1px solid #14c4b5'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <i className={`bi bi-cpu ${isAiProcessing ? 'fa-spin' : ''}`} style={{ color: '#14c4b5' }}></i>
+                                        <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                                            {isAiProcessing ? "AI Analyzing..." : aiFeedback || "AI Fit Ready"}
+                                        </span>
+                                    </div>
+                                    {detectedSize && detectedSize !== "Unknown" && !aiFeedback && (
+                                        <div style={{ marginTop: '5px', color: '#ffd700', fontSize: '13px' }}>
+                                            Detected Size: <strong>{detectedSize}</strong>
+                                        </div>
+                                    )}
+                                </div>
                                 
-                                <div className="controls">
+                                <div className="controls" style={{ zIndex: 11 }}>
                                     <BaseButtonBlack onClick={toggleWebcam} style={{background: "#ff4d4d"}}>
                                         Stop Camera
                                     </BaseButtonBlack>
+                                    
+                                    {selectedImage && (
+                                        <a 
+                                            href={selectedImage} 
+                                            download="MyWearYourStyleFit.png"
+                                            style={{
+                                                textDecoration: 'none', background: '#14c4b5', color: 'white',
+                                                padding: '12px 20px', borderRadius: '8px', fontWeight: 'bold',
+                                                display: 'inline-flex', alignItems: 'center', gap: '8px'
+                                            }}
+                                        >
+                                            <i className="bi bi-download"></i> Share My Fit
+                                        </a>
+                                    )}
                                 </div>
                             </>
                         )}
                         
                         {!shirtImage && webcamActive && (
-                            <p style={{color: "white", marginTop: "10px"}}>Please select a garment from the gallery</p>
+                            <p style={{color: "white", marginTop: "10px", zIndex: 10}}>Please select a garment from the gallery</p>
                         )}
                     </WebcamContainer>
                 </TryOnWrapper>

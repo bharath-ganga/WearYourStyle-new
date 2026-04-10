@@ -7,6 +7,7 @@ import { BaseLinkGreen, BaseButtonGreen } from "../../styles/button";
 import { currencyFormat } from "../../utils/helper";
 import { breakpoints, defaultTheme } from "../../styles/themes/default";
 import ProductSimilar from "../../components/product/ProductSimilar";
+import CompleteLook from "../../components/product/CompleteLook";
 import ProductServices from "../../components/product/ProductServices";
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -359,6 +360,7 @@ const ProductDetailsScreen = () => {
                         <ProductServices />
                     </ProductDetailsWrapper>
                 </DetailsContent>
+                <CompleteLook currentProduct={product} />
                 <ProductSimilar />
             </Container>
         </DetailsScreenWrapper>

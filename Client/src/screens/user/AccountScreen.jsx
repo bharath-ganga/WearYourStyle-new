@@ -101,6 +101,24 @@ const AccountScreen = () => {
               <UserMenu />
               <UserContent>
                 <Title titleText={"My Account"} />
+
+                {/* GAMIFICATION WIDGET */}
+                <div style={{
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)', 
+                    borderRadius: '12px', padding: '20px', color: 'white', 
+                    marginBottom: '25px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    boxShadow: '0 4px 15px rgba(255, 165, 0, 0.3)'
+                }}>
+                    <div>
+                        <h3 style={{fontSize: '24px', fontWeight: 'bold', margin: '0 0 5px 0'}}><i className="bi bi-trophy"></i> Elite Stylist</h3>
+                        <p style={{margin: 0, fontSize: '16px'}}>You have <strong>{Number(localStorage.getItem('loyaltyPoints') || 450)}</strong> Loyalty Points.</p>
+                        <small>Earn 500 points for a ₹500 voucher!</small>
+                    </div>
+                    <button style={{background: 'white', color: '#FFA500', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}>
+                        Redeem
+                    </button>
+                </div>
+
                 <h4 className="title-sm">Contact Details</h4>
                 <form>
                   <div className="form-wrapper">

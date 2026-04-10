@@ -197,6 +197,10 @@ const ShippingPayment = () => {
 
             await axios.post(`${API_BASE_URL}/api/orders/place`, orderData);
             
+            // Add Gamification/Loyalty Points!
+            const pts = Number(localStorage.getItem("loyaltyPoints") || 450);
+            localStorage.setItem("loyaltyPoints", pts + 50);
+
             dispatch(clearCart());
             toast.success("Order placed successfully!");
             navigate("/confirm");

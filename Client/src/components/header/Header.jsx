@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleSidebar } from "../../redux/slices/sidebarSlice";
 import { useEffect, useState } from "react";
 import { getCartTotal } from "../../redux/slices/cartSlice";
+import { useTheme } from "../../context/ThemeContext";
 
 const NavigationAndSearchWrapper = styled.div`
   column-gap: 20px;
@@ -69,12 +70,12 @@ const NavigationMenuWrapper = styled.nav`
 
   .nav-menu-link {
     &.active {
-      color: ${defaultTheme.color_outerspace};
+      color: ${(props) => props.theme.color_outerspace};
       font-weight: 700;
     }
 
     &:hover {
-      color: ${defaultTheme.color_outerspace};
+      color: ${(props) => props.theme.color_outerspace};
     }
   }
 
@@ -83,7 +84,7 @@ const NavigationMenuWrapper = styled.nav`
     top: 0;
     right: 0;
     width: 260px;
-    background: ${defaultTheme.color_white};
+    background: ${(props) => props.theme.color_white};
     height: 100%;
     z-index: 999;
     display: none;
@@ -98,14 +99,14 @@ const IconLinksWrapper = styled.div`
     border-radius: 6px;
 
     &.active {
-      background-color: ${defaultTheme.color_sea_green};
+      background-color: ${(props) => props.theme.color_sea_green};
       img {
         filter: brightness(100);
       }
     }
 
     &:hover {
-      background-color: ${defaultTheme.color_whitesmoke};
+      background-color: ${(props) => props.theme.color_whitesmoke};
     }
   }
 
@@ -123,6 +124,7 @@ const Header = () => {
   const dispatch = useDispatch();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { carts, itemsCount } = useSelector((state) => state.cart);
+  const { themeMode, toggleTheme } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -213,6 +215,19 @@ const Header = () => {
                 </span>
               )}
             </Link>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="icon-link inline-flex items-center justify-center"
+              title="Toggle Theme"
+              style={{ fontSize: '20px', color: themeMode === 'light' ? '#3c4242' : '#ffffff' }}
+            >
+              {themeMode === "light" ? (
+                <i className="bi bi-moon-fill"></i>
+              ) : (
+                <i className="bi bi-sun-fill"></i>
+              )}
+            </button>
           </IconLinksWrapper>
         </div>
       </Container>

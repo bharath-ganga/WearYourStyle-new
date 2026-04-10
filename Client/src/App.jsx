@@ -29,10 +29,11 @@ import VirtualTryOn from "./screens/VirtualTryOn";
 import Wardrobe from "./screens/wardrobe/WardrobeScreen";
 import AdminLogin from "./screens/admin/AdminLoginScreen";
 import AdminDashboard from "./screens/admin/AdminDashboard";
+import { ThemeContextProvider } from "./context/ThemeContext";
 
 function App() {
   return (
-    <>
+    <ThemeContextProvider>
       <Router>
         <GlobalStyles />
         <Routes>
@@ -69,7 +70,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
-    </>
+    </ThemeContextProvider>
   );
 }
 

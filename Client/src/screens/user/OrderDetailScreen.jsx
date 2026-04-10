@@ -384,6 +384,44 @@ const OrderDetailScreen = () => {
                 </p>
               </OrderDetailMessageWrapper>
 
+              {/* SIMULATED LIVE TRACKER MAP (CSS Animations) */}
+              {order.status !== "Delivered" && (
+                <div style={{
+                    marginTop: '40px', padding: '24px', backgroundColor: '#eef4f4', 
+                    borderRadius: '8px', border: '1px solid #d9d9d9', overflow: 'hidden', position: 'relative'
+                }}>
+                    <h4 className="text-xl font-bold" style={{marginBottom: '15px'}}><i className="bi bi-geo-alt-fill text-sea-green"></i> Live Tracking</h4>
+                    <div style={{height: '150px', backgroundColor: '#cfdfdf', borderRadius: '8px', position: 'relative'}}>
+                        {/* Street Line */}
+                        <div style={{position: 'absolute', top:'50%', left: '10%', right: '10%', height: '4px', backgroundColor: '#fff', transform:'translateY(-50%)', borderRadius:'2px'}}></div>
+                        
+                        {/* Warehouse Marker */}
+                        <div style={{position: 'absolute', top:'50%', left: '10%', padding: '5px', backgroundColor: '#333', color: 'white', borderRadius: '4px', transform: 'translate(0, -120%)'}}>
+                            <small>Warehouse</small>
+                        </div>
+
+                        {/* Destination Marker */}
+                        <div style={{position: 'absolute', top:'50%', right: '10%', padding: '5px', backgroundColor: '#333', color: 'white', borderRadius: '4px', transform: 'translate(0, -120%)'}}>
+                            <small>You</small>
+                        </div>
+                        <i className="bi bi-geo-alt-fill text-red text-2xl" style={{position:'absolute', right: '10%', top:'50%', transform: 'translate(50%, -50%)', color: 'red'}}></i>
+
+                        {/* Moving Vehicle */}
+                        <style>{`
+                            @keyframes drive {
+                                0% { left: 10%; }
+                                50% { left: 50%; }
+                                100% { left: 80%; }
+                            }
+                        `}</style>
+                        <i className="bi bi-truck text-3xl" style={{
+                            position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', 
+                            color: '#14c4b5', animation: 'drive 8s linear infinite alternate'
+                        }}></i>
+                    </div>
+                </div>
+              )}
+
               <OrderDetailListWrapper className="order-d-list">
                 {order.items?.map((item, index) => {
                   return (

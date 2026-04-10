@@ -1,5 +1,5 @@
 import { createGlobalStyle } from "styled-components";
-import { breakpoints, defaultTheme } from "../themes/default";
+import { breakpoints } from "../themes/default";
 
 export const GlobalStyles = createGlobalStyle`
     * {
@@ -20,8 +20,9 @@ export const GlobalStyles = createGlobalStyle`
         font-size: 14px;
         font-weight: 400;
         line-height: 1.6;
-        font-family: ${defaultTheme.font_family_inter};
-        color: ${defaultTheme.color_jet};
+        font-family: ${(props) => props.theme.font_family_inter};
+        color: ${(props) => props.theme.color_jet};
+        background-color: ${(props) => props.theme.color_white};
     }
 
     // common reset
@@ -30,14 +31,14 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     a {
-        transition: ${defaultTheme.default_transition};
+        transition: ${(props) => props.theme.default_transition};
     }
 
     button {
         border: none;
         cursor: pointer;
         background-color: transparent;
-        transition: ${defaultTheme.default_transition};
+        transition: ${(props) => props.theme.default_transition};
     }
     
     /* flexbox and grid */
@@ -133,32 +134,32 @@ export const GlobalStyles = createGlobalStyle`
 
     // text
     [class^="text"] {
-        color: ${defaultTheme.color_outerspace};
+        color: ${(props) => props.theme.color_outerspace};
     }
 
     .text-white {
-        color: ${defaultTheme.color_white}!important;
+        color: ${(props) => props.theme.color_white}!important;
     }
     .text-gray {
-        color: ${defaultTheme.color_gray};
+        color: ${(props) => props.theme.color_gray};
     }
     .text-black {
-        color: ${defaultTheme.color_black};
+        color: ${(props) => props.theme.color_black};
     }
     .text-sea-green {
-        color: ${defaultTheme.color_sea_green};
+        color: ${(props) => props.theme.color_sea_green};
     }
     .text-red {
-        color: ${defaultTheme.color_red};
+        color: ${(props) => props.theme.color_red};
     }
     .text-yellow {
-        color: ${defaultTheme.color_yellow};
+        color: ${(props) => props.theme.color_yellow};
     }
     .text-outerspace {
-        color: ${defaultTheme.color_outerspace};
+        color: ${(props) => props.theme.color_outerspace};
     }
     .text-silver {
-        color: ${defaultTheme.color_silver};
+        color: ${(props) => props.theme.color_silver};
     }
 
     .text-start {
@@ -186,25 +187,25 @@ export const GlobalStyles = createGlobalStyle`
 
     // backgrounds
     .bg-white {
-        background-color: ${defaultTheme.color_white};
+        background-color: ${(props) => props.theme.color_white};
     }
     .bg-gray {
-        background-color: ${defaultTheme.color_gray};
+        background-color: ${(props) => props.theme.color_gray};
     }
     .bg-black {
-        background-color: ${defaultTheme.color_black};
+        background-color: ${(props) => props.theme.color_black};
     }
     .bg-sea-green {
-        background-color: ${defaultTheme.color_sea_green};
+        background-color: ${(props) => props.theme.color_sea_green};
     }
     .bg-transparent {
         background-color: transparent;
     }
     .bg-outerspace {
-        background-color: ${defaultTheme.color_outerspace};
+        background-color: ${(props) => props.theme.color_outerspace};
     }
     .bg-silver{
-        background-color: ${defaultTheme.color_silver};
+        background-color: ${(props) => props.theme.color_silver};
     }
 
     // page
@@ -226,7 +227,7 @@ export const GlobalStyles = createGlobalStyle`
     // typography
     a {
         text-decoration: none;
-        color: ${defaultTheme.color_jet};
+        color: ${(props) => props.theme.color_jet};
     }
 
     .text-xs {
