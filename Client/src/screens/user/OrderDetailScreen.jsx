@@ -372,37 +372,78 @@ const OrderDetailScreen = () => {
               {/* SIMULATED LIVE TRACKER MAP (CSS Animations) */}
               {order.status !== "Delivered" && (
                 <div style={{
-                    marginTop: '40px', padding: '24px', backgroundColor: '#eef4f4', 
-                    borderRadius: '8px', border: '1px solid #d9d9d9', overflow: 'hidden', position: 'relative'
+                    marginTop: '40px', padding: '30px', backgroundColor: '#f8fafc',
+                    borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden'
                 }}>
-                    <h4 className="text-xl font-bold" style={{marginBottom: '15px'}}><i className="bi bi-geo-alt-fill text-sea-green"></i> Live Tracking</h4>
-                    <div style={{height: '150px', backgroundColor: '#cfdfdf', borderRadius: '8px', position: 'relative'}}>
-                        {/* Street Line */}
-                        <div style={{position: 'absolute', top:'50%', left: '10%', right: '10%', height: '4px', backgroundColor: '#fff', transform:'translateY(-50%)', borderRadius:'2px'}}></div>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                       <div style={{ width: '12px', height: '12px', backgroundColor: '#10b981', borderRadius: '50%', marginRight: '10px', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)' }}></div>
+                       <h4 className="text-xl font-bold m-0" style={{ color: '#0f172a' }}>Live Tracking</h4>
+                    </div>
+
+                    <div style={{height: '140px', backgroundColor: '#e2e8f0', borderRadius: '12px', position: 'relative', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)' }}>
+                        {/* Moving dashed road line */}
+                        <div style={{
+                            position: 'absolute', top:'50%', left: '10%', right: '10%', height: '6px', 
+                            background: 'repeating-linear-gradient(90deg, #94a3b8, #94a3b8 10px, transparent 10px, transparent 20px)', 
+                            transform:'translateY(-50%)', borderRadius:'4px',
+                            animation: 'moveRoad 1s linear infinite'
+                        }}></div>
                         
+                        {/* Progress line filling up the road */}
+                        <div style={{
+                            position: 'absolute', top:'50%', left: '10%', height: '6px', backgroundColor: '#10b981', transform:'translateY(-50%)', borderRadius:'4px',
+                            animation: 'fillRoad 10s ease-in-out infinite alternate', zIndex: 1
+                        }}></div>
+
                         {/* Warehouse Marker */}
-                        <div style={{position: 'absolute', top:'50%', left: '10%', padding: '5px', backgroundColor: '#333', color: 'white', borderRadius: '4px', transform: 'translate(0, -120%)'}}>
-                            <small>Warehouse</small>
+                        <div style={{position: 'absolute', top:'50%', left: '10%', transform: 'translate(-50%, -50%)', zIndex: 2 }}>
+                            <div style={{ position: 'relative', width: '20px', height: '20px', backgroundColor: '#334155', borderRadius: '50%', border: '4px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}></div>
+                            <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', padding: '4px 10px', backgroundColor: '#334155', color: 'white', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}>Warehouse</div>
                         </div>
 
                         {/* Destination Marker */}
-                        <div style={{position: 'absolute', top:'50%', right: '10%', padding: '5px', backgroundColor: '#333', color: 'white', borderRadius: '4px', transform: 'translate(0, -120%)'}}>
-                            <small>You</small>
+                        <div style={{position: 'absolute', top:'50%', right: '10%', transform: 'translate(50%, -50%)', zIndex: 2}}>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ width: '24px', height: '24px', backgroundColor: '#ef4444', borderRadius: '50%', border: '4px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
+                                <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '50%', animation: 'pulse 1.5s infinite', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
+                            </div>
+                            <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', padding: '4px 10px', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold' }}>You</div>
                         </div>
-                        <i className="bi bi-geo-alt-fill text-red text-2xl" style={{position:'absolute', right: '10%', top:'50%', transform: 'translate(50%, -50%)', color: 'red'}}></i>
 
-                        {/* Moving Vehicle */}
+                        {/* Vehicle */}
                         <style>{`
-                            @keyframes drive {
-                                0% { left: 10%; }
-                                50% { left: 50%; }
-                                100% { left: 80%; }
+                            @keyframes driveVehicle {
+                                0% { left: 10%; transform: translate(-50%, -50%) translateY(0); }
+                                25% { transform: translate(-50%, -50%) translateY(-3px); }
+                                50% { left: 50%; transform: translate(-50%, -50%) translateY(0); }
+                                75% { transform: translate(-50%, -50%) translateY(-3px); }
+                                100% { left: 88%; transform: translate(-50%, -50%) translateY(0); }
+                            }
+                            @keyframes fillRoad {
+                                0% { width: 0%; }
+                                100% { width: 78%; }
+                            }
+                            @keyframes moveRoad {
+                                0% { background-position: 0 0; }
+                                100% { background-position: -20px 0; }
+                            }
+                            @keyframes pulse {
+                                0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+                                100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
                             }
                         `}</style>
-                        <i className="bi bi-truck text-3xl" style={{
-                            position: 'absolute', top: '50%', transform: 'translate(-50%, -50%)', 
-                            color: '#14c4b5', animation: 'drive 8s linear infinite alternate'
-                        }}></i>
+                        <div style={{
+                            position: 'absolute', top: '50%', zIndex: 4,
+                            animation: 'driveVehicle 10s ease-in-out infinite alternate'
+                        }}>
+                             <div style={{
+                                 padding: '8px', backgroundColor: 'white', borderRadius: '50%',
+                                 boxShadow: '0 4px 8px rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                                 border: '3px solid #10b981'
+                             }}>
+                                <i className="bi bi-truck text-2xl" style={{ color: '#10b981' }}></i>
+                             </div>
+                        </div>
                     </div>
                 </div>
               )}

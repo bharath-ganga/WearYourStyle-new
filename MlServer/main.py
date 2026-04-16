@@ -112,19 +112,19 @@ def classify_image():
         return jsonify({'error': str(e)}), 500
 
 def overlay_png(background, overlay, position):
-# ... existing code ...
     bg_h, bg_w, bg_channels = background.shape
     overlay_h, overlay_w, overlay_channels = overlay.shape
 
     x, y = position
 
-    # Ensure the overlay doesn't go out of bounds
-    if x < 0: x = 0
-    if y < 0: y = 0
-    
     # Calculate visible region of overlay
-    ov_x1 = 0
-    ov_y1 = 0
+    ov_x1 = max(0, -x)
+    ov_y1 = max(0, -y)
+    
+    # Calculate visible region applied on background
+    bg_x1 = max(0, x)
+    bg_y1 = max(0, y)
+    
     ov_x2 = overlay_w
     ov_y2 = overlay_h
     
@@ -133,14 +133,17 @@ def overlay_png(background, overlay, position):
     if y + overlay_h > bg_h:
         ov_y2 = bg_h - y
         
-    if ov_x2 <= 0 or ov_y2 <= 0:
+    bg_x2 = bg_x1 + (ov_x2 - ov_x1)
+    bg_y2 = bg_y1 + (ov_y2 - ov_y1)
+
+    if ov_x2 <= ov_x1 or ov_y2 <= ov_y1:
         return background
 
     # Extract regions
     overlay_visible = overlay[ov_y1:ov_y2, ov_x1:ov_x2]
-    background_roi = background[y:y+ov_y2, x:x+ov_x2]
+    background_roi = background[bg_y1:bg_y2, bg_x1:bg_x2]
 
-    # Handle Alpha Channel
+    # Handle Alpha Channel correctly
     if overlay_visible.shape[2] == 4:
         alpha_s = overlay_visible[:, :, 3] / 255.0
         alpha_l = 1.0 - alpha_s
@@ -151,12 +154,59 @@ def overlay_png(background, overlay, position):
                 alpha_l * background_roi[:, :, c]
             )
     else:
-        # If no alpha channel, just copy the RGB
         for c in range(0, 3):
             background_roi[:, :, c] = overlay_visible[:, :, c]
 
-    background[y:y+ov_y2, x:x+ov_x2] = background_roi
+    background[bg_y1:bg_y2, bg_x1:bg_x2] = background_roi
     return background
+
+def crop_to_content(image):
+    if image.shape[2] == 4:
+        alpha = image[:, :, 3]
+        coords = cv2.findNonZero(alpha)
+        if coords is not None:
+            x, y, w, h = cv2.boundingRect(coords)
+            return image[y:y+h, x:x+w]
+    return image
+
+def remove_background(image):
+    # Ensure image has alpha channel
+    if image.shape[2] == 3:
+        b, g, r = cv2.split(image)
+        alpha = np.ones(b.shape, dtype=b.dtype) * 255
+        image = cv2.merge((b, g, r, alpha))
+        
+    # Check if the image already has transparency (pre-cut)
+    min_alpha = np.min(image[:, :, 3])
+    if min_alpha < 255:
+        return image
+        
+    h, w = image.shape[:2]
+    # mask needs to be 2 pixels wider and higher
+    mask = np.zeros((h+2, w+2), np.uint8)
+    
+    # get fill image ignoring existing alpha
+    fill_img = image[:,:,:3].copy()
+    
+    diff = (12, 12, 12)
+    flags = 4 | cv2.FLOODFILL_MASK_ONLY # 4 connectivity + mask only
+    
+    cv2.floodFill(fill_img, mask, (0,0), 0, diff, diff, flags)
+    cv2.floodFill(fill_img, mask, (w-1,0), 0, diff, diff, flags)
+    cv2.floodFill(fill_img, mask, (0,h-1), 0, diff, diff, flags)
+    cv2.floodFill(fill_img, mask, (w-1,h-1), 0, diff, diff, flags)
+    
+    bg_mask = mask[1:h+1, 1:w+1]
+    
+    # Erode the object slightly to prevent white halos
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    bg_mask = cv2.dilate(bg_mask, kernel, iterations=1)
+    
+    # Set existing alpha to 0 where background was found
+    current_alpha = image[:, :, 3]
+    image[:, :, 3] = np.where(bg_mask == 1, 0, current_alpha).astype(np.uint8)
+    
+    return image
 
 @socketio.on('update_garment')
 def update_garment(data):
@@ -164,6 +214,9 @@ def update_garment(data):
         shirt_data = base64.b64decode(data['shirt'])
         shirt = cv2.imdecode(np.frombuffer(shirt_data, np.uint8), cv2.IMREAD_UNCHANGED)
         if shirt is not None:
+            # Dynamically delete manufacturer solid backgrounds
+            shirt = remove_background(shirt)
+            
             garment_cache[request.sid] = shirt
             emit('garment_updated', {'status': 'success'})
         else:
@@ -195,6 +248,8 @@ def process_frame(data):
             emit('error', {'message': 'No shirt selected. Please select one.'})
             return
 
+        cropped_shirt = crop_to_content(shirt)
+
         # Convert frame to MediaPipe Image
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         
@@ -202,23 +257,18 @@ def process_frame(data):
         detection_result = detector.detect(mp_image)
 
         if detection_result.pose_landmarks:
-            # Indices for landmarks: https://developers.google.com/mediapipe/solutions/vision/pose_landmarker
             landmarks = detection_result.pose_landmarks[0]
             
-            # Index 11: Left Shoulder, Index 12: Right Shoulder
             left_shoulder = landmarks[11]
             right_shoulder = landmarks[12]
 
             h, w, _ = frame.shape
-            left_shoulder_x = int(left_shoulder.x * w)
-            left_shoulder_y = int(left_shoulder.y * h)
-            right_shoulder_x = int(right_shoulder.x * w)
-            right_shoulder_y = int(right_shoulder.y * h)
+            ls_x, ls_y = int(left_shoulder.x * w), int(left_shoulder.y * h)
+            rs_x, rs_y = int(right_shoulder.x * w), int(right_shoulder.y * h)
 
-            shoulder_width = abs(left_shoulder_x - right_shoulder_x)
+            shoulder_width = abs(ls_x - rs_x)
 
             if shoulder_width > 0:
-                # Estimate size based on normalized shoulder width relative to frame
                 normalized_shoulder = shoulder_width / w
                 if normalized_shoulder < 0.18:
                     detected_size = "S (Small)"
@@ -229,15 +279,19 @@ def process_frame(data):
                 else:
                     detected_size = "XL (Extra Large)"
 
-                # Resize shirt based on shoulder width
-                shirt_width = int(shoulder_width * 2.2) # Increased scale for better fit
-                shirt_height = int(shirt_width * shirt.shape[0] / shirt.shape[1])
-                resized_shirt = cv2.resize(shirt, (shirt_width, shirt_height))
+                # Resize cropped shirt seamlessly based on subject's body geometry
+                scale_factor = 1.45
+                shirt_width = int(shoulder_width * scale_factor)
+                shirt_height = int(shirt_width * cropped_shirt.shape[0] / cropped_shirt.shape[1])
+                resized_shirt = cv2.resize(cropped_shirt, (shirt_width, shirt_height))
 
-                # Position shirt (centered between shoulders, slightly above)
+                mid_shoulder_x = (ls_x + rs_x) // 2
+                mid_shoulder_y = (ls_y + rs_y) // 2
+
+                # Anchor the dress beautifully slightly above the collarbone line
                 shirt_position = (
-                    int(min(left_shoulder_x, right_shoulder_x) - (shirt_width - shoulder_width) / 2),
-                    int(min(left_shoulder_y, right_shoulder_y) - shirt_height // 4)
+                    mid_shoulder_x - shirt_width // 2,
+                    mid_shoulder_y - int(shirt_height * 0.15)
                 )
 
                 frame = overlay_png(frame, resized_shirt, shirt_position)

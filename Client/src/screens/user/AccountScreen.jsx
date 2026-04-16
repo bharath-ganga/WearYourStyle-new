@@ -64,6 +64,7 @@ const breadcrumbItems = [
 const AccountScreen = () => {
   const [user, setUser] = useState();
   const [add, setAdd] = useState();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
       useEffect(() => {
         const authenticateUser = async () => {
@@ -86,11 +87,30 @@ const AccountScreen = () => {
             }
             catch (err) {
                 console.log("Error:", err);
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("userId");
+                toast.error("Please login again to access your account.");
+                navigate("/sign_in");
+            } finally {
+                setLoading(false);
             }
         }
         authenticateUser();
-      }, []);
+      }, [navigate]);
       
+  if (loading) {
+    return (
+      <AccountScreenWrapper className="page-py-spacing">
+        <Container>
+          <Breadcrumb items={breadcrumbItems} />
+          <div style={{ textAlign: 'center', padding: '50px 0' }}>
+            <h4>Loading account details...</h4>
+          </div>
+        </Container>
+      </AccountScreenWrapper>
+    );
+  }
+
   return (
     <>
       {user && (
